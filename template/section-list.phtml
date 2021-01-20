@@ -1,0 +1,74 @@
+<?php
+
+include_once (FUSION::getRoot()).DS.'class/sections.php';
+
+$database = new Database();
+$sectionsArr = array();
+$itemCounts = 0;
+
+if( $database->getConnection() ) {
+    $db = $database->getConnection();
+    $section = new sections($db);
+
+    $stmt = $section->getSections();
+    $itemCounts = $stmt->rowCount();
+
+    if( $itemCounts > 0 ) {
+        $sectionsArr["body"] = array();
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            extract($row);
+            $e = array(
+                "id"        => $id,
+                "client_id" => $client_id,
+                "name"      => $name
+            );
+
+            array_push($sectionsArr["body"], $e);
+        }//while
+    }//if item counts
+}//if connection is made
+?>
+
+<div>
+    <?php if( sizeof($sectionsArr["body"]) > 0  ) : ?>
+        <div class="row" style="border-bottom: 1px solid blue">
+            <div class="column">ID</div>
+            <div class="column">Client ID</div>
+            <div class="column">Name</div>
+        </div>
+        <?php $i = 0; ?>
+        <?php foreach ($sectionsArr["body"] AS $memberSection) : ?>
+            <?php
+                $rowId = $i;
+                $formId = 'editsection-form-'.$rowId;
+            ?>
+            <div class="row" style="padding: 2px">
+                <div class="column"><?php echo $memberSection['id'] ?></div>
+                <div class="column"><?php echo $memberSection['client_id'] ?></div>
+                <div class="column"><?php echo $memberSection['name'] ?></div>
+                <div class="column">
+                    <a href="#" onclick="showHideEditRow('section','<?php echo $rowId ?>')">Edit</a>
+                </div>
+            </div>
+
+            <div id="edit-section-row-<?php echo $rowId ?>" class="row" style="clear: both;margin-bottom: 10px;display: none">
+                <form id="<?php echo $formId ?>" method="POST" action="<?php echo $apiUrl.'/sections/edit.php' ?>">
+                    <input id="<?php echo $formId."-active" ?>" type="hidden" value="0">
+                    <input id="edit-sectionId-row-<?php echo $rowId ?>" type="hidden" value="<?php echo $memberSection['id'] ?>">
+                    <div class="column" id="section-edit-row-result-<?php echo $rowId ?>" style="margin-top: 17px;"></div>
+                    <div class="column">Client ID:<input id="clientId-row-<?php echo $rowId ?>" type="text" size="10" ></div>
+                    <div class="column">Name:<input id="clientId-name-row-<?php echo $rowId ?>" type="text" size="10"></div>
+                    <div class="column" style="margin-top: 17px;">
+                        <button id="section-edit-submit-button-<?php echo $rowId ?>" onclick="editSectionForm('<?php echo $rowId ?>')">
+                            <span>Edit</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <?php $i++; ?>
+        <?php endforeach; ?>
+        <input type="hidden" id="edit-section-item-counts" value="<?php echo $itemCounts ?>">
+    <?php endif; ?>
+</div>

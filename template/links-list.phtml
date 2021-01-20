@@ -1,0 +1,70 @@
+<?php
+
+include_once (FUSION::getRoot()).DS.'class/links.php';
+
+$database = new Database();
+$linksArr = array();
+$itemCounts = 0;
+
+if( $database->getConnection() ) {
+    $db = $database->getConnection();
+    $links = new links($db);
+    $stmt = $links->getLinks();
+    $itemCounts = $stmt->rowCount();
+
+    if( $itemCounts > 0 ) {
+        $linksArr["body"] = array();
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            extract($row);
+            $e = array(
+                "id"         => $id,
+                "section_id" => $section_id,
+                "name"       => $name
+            );
+
+            array_push($linksArr["body"], $e);
+        }//while
+    }//if item counts
+}//if
+?>
+
+<div>
+    <?php if( sizeof($linksArr["body"]) > 0  ) : ?>
+        <div class="row" style="border-bottom: 1px solid blue">
+            <div class="column">Link ID</div>
+            <div class="column">Section ID</div>
+            <div class="column">Name</div>
+        </div>
+        <?php $i = 0; ?>
+        <?php foreach ($linksArr["body"] AS $member) : ?>
+            <?php
+                $rowId = $i;
+                $formId = 'editlink-form-'.$rowId;
+            ?>
+            <div class="row" style="padding: 2px">
+                <div class="column"><?php echo $member['id'] ?></div>
+                <div class="column"><?php echo $member['section_id'] ?></div>
+                <div class="column"><?php echo $member['name'] ?></div>
+                <div class="column">
+                    <a href="#" onclick="showHideEditRow('link','<?php echo $rowId ?>')">Edit</a>
+                </div>
+            </div>
+            <div id="edit-link-row-<?php echo $rowId ?>" class="row" style="clear: both;margin-bottom: 10px;display: none">
+                <form id="<?php echo $formId ?>" method="POST" action="<?php echo $apiUrl.'/links/edit.php' ?>">
+                    <input id="<?php echo $formId."-active" ?>" type="hidden" value="0">
+                    <input id="linkId-row-<?php echo $rowId ?>" type="hidden" value="<?php echo $member['id'] ?>">
+                    <div class="column" id="edit-row-result-<?php echo $rowId ?>" style="margin-top: 17px;"></div>
+                    <div class="column">Section ID:<input id="sectionId-row-<?php echo $rowId ?>" type="text" size="10" ></div>
+                    <div class="column">Name:<input id="name-row-<?php echo $rowId ?>" type="text" size="10"></div>
+                    <div class="column" style="margin-top: 17px;">
+                        <button id="link-edit-submit-button-<?php echo $rowId ?>" onclick="editLinkForm('<?php echo $rowId ?>')">
+                            <span>Edit</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <?php $i++; ?>
+        <?php endforeach; ?>
+        <input type="hidden" id="edit-link-item-counts" value="<?php echo $itemCounts ?>">
+    <?php endif; ?>
+</div>
